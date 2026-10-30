@@ -143,7 +143,7 @@ npm run tauri build
 npm run tauri build -- --bundles app
 ```
 
-当前 macOS arm64 的 `.app` 体积约 **4.84 MB**，满足 `< 10MB` 的安装包预算。
+当前 macOS arm64 的 `.app` 体积约 **4.74 MB**，满足 `< 10MB` 的安装包预算。
 
 ## 测试
 
@@ -155,7 +155,7 @@ cd src-tauri && cargo check           # 编译检查
 
 ## 验证
 
-- macOS arm64 release `.app` 体积 **4.84 MiB**。
+- macOS arm64 release `.app` 体积 **4.74 MiB**。
 - 前端 13 个单测、Rust 8 个单测全部通过，`cargo clippy --all-targets -- -D warnings` 无告警。
 - 默认英文；`EN / 中` 切换即时生效并持久化，原生托盘菜单语言同步。
 - 开启后 `pmset -g assertions` 可见 `caffeinate` 的 `PreventUserIdleSystemSleep` / `PreventUserIdleDisplaySleep` 断言。
@@ -174,3 +174,5 @@ cd src-tauri && cargo check           # 编译检查
 python3 scripts/generate_icons.py          # 需要 Pillow + numpy
 npx tauri icon src-tauri/icons/source.png  # 生成各平台图标尺寸
 ```
+
+应用图标按 macOS 标准图标网格生成：1024 画布内实际圆角内容为 824×824，四周保留 100px 透明边距，并在最后按圆角遮罩裁剪所有图层，避免启动台中图标偏大或出现方角阴影。

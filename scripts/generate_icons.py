@@ -16,7 +16,7 @@ import math
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 ICONS = ROOT / "src-tauri" / "icons"
@@ -117,6 +117,8 @@ def build_app_icon() -> None:
     scale = SUPERSAMPLE
     work = size * scale
     radius = work * 0.225
+    # macOS 图标规范：1024 画布中实际圆角矩形内容为 824×824，四周留 100px。
+    content_ratio = 824 / 1024
 
     background = vertical_gradient(work, (17, 28, 49), (6, 33, 43)).convert("RGBA")
     background.putalpha(rounded_mask(work, radius))
@@ -152,7 +154,19 @@ def build_app_icon() -> None:
         glow_blur=work * 0.07,
     )
 
-    icon = background.resize((size, size), Image.Resampling.LANCZOS)
+    # 关键：最后再按圆角遮罩裁剪一次。顶部高光在合成时会溢出圆角，
+    # 若保留这些低透明度像素，macOS 会按矩形 alpha 绘制出方角阴影。
+    background.putalpha(
+        ImageChops.multiply(background.getchannel("A"), rounded_mask(work, radius))
+    )
+
+    content_size = round(size * content_ratio)
+    content = background.resize(
+        (content_size, content_size), Image.Resampling.LANCZOS
+    )
+    icon = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    offset = (size - content_size) // 2
+    icon.alpha_composite(content, (offset, offset))
     icon.save(ICONS / "source.png", optimize=True)
     print(f"wrote {ICONS / 'source.png'}")
 
